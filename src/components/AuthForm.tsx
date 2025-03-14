@@ -13,7 +13,7 @@ import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import { BsGithub } from "react-icons/bs";
 import { FcGoogle } from "react-icons/fc";
 import { BeatLoader } from "react-spinners";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer, toast, Theme } from "react-toastify";
 import * as Yup from "yup";
 import { motion } from "framer-motion";
 
@@ -25,12 +25,12 @@ import Button from "./Inputs/Button";
 import Input from "./Inputs/Input";
 
 // Client-side only imports
-const ClientToast = React.lazy(() => Promise.resolve({ default: () => {
+const ClientToast = React.lazy(() => Promise.resolve({ default: ({ theme }: { theme: Theme }) => {
 	// Only import the CSS on the client
 	if (typeof window !== 'undefined') {
 		require('react-toastify/dist/ReactToastify.css');
 	}
-	return <ToastContainer position="top-center" theme="light" />;
+	return <ToastContainer position="top-center" theme={theme} />;
 }}));
 
 enum FormVariants {
@@ -273,7 +273,7 @@ export default function AuthForm(): React.JSX.Element {
 						</div>
 					</div>
 					<React.Suspense fallback={null}>
-						<ClientToast />
+						<ClientToast theme={currentTheme === "dark" ? "dark" : "light"} />
 					</React.Suspense>
 				</>
 			)}
