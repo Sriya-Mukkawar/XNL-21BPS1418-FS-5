@@ -75,6 +75,81 @@ npm test
 npm run test:coverage
 ```
 
+## Database Schema
+
+### Core Entities
+
+### User
+
+| Field          | Type      | Constraints      |
+|---------------|----------|------------------|
+| `id`         | ObjectId  | Primary Key      |
+| `name`       | String    | Required         |
+| `email`      | String    | Unique, Required |
+| `emailVerified` | Boolean  | Default: false  |
+| `hashedPassword` | String  | Required        |
+| `image`      | String    | Optional         |
+| `about`      | String    | Optional         |
+| `lastSeen`   | DateTime  | Default: null    |
+
+#### Relations:
+- `User` ↔ `Conversation` (Many-to-Many)
+- `User` ↔ `Message` (One-to-Many)
+- `User` ↔ `SeenMessages` (Many-to-Many)
+
+---
+
+### Conversation
+
+| Field         | Type      | Constraints      |
+|--------------|----------|------------------|
+| `id`        | ObjectId  | Primary Key      |
+| `name`      | String    | For group chats  |
+| `isGroup`   | Boolean   | Default: false   |
+| `lastMessageAt` | DateTime | Default: null  |
+
+#### Relations:
+- `Conversation` ↔ `Users` (Many-to-Many)
+- `Conversation` ↔ `Messages` (One-to-Many)
+
+---
+
+### Message
+
+| Field        | Type      | Constraints      |
+|-------------|----------|------------------|
+| `id`       | ObjectId  | Primary Key      |
+| `body`     | String    | Optional         |
+| `image`    | String    | Optional         |
+| `audio`    | String    | Optional         |
+| `video`    | String    | Optional         |
+| `type`     | String    | Required         |
+| `metadata` | String    | Optional         |
+| `createdAt` | DateTime  | Required        |
+
+#### Relations:
+- `Message` ↔ `Sender (User)` (Many-to-One)
+- `Message` ↔ `Conversation` (Many-to-One)
+- `Message` ↔ `SeenBy (Users)` (Many-to-Many)
+
+##System Architecture
+###Key Components
+
+#### 1.Real-time Communication
+WebSocket connections (Pusher)
+Presence detection
+Message queuing
+
+#### 2.Media Handling
+Audio/Video streaming
+File uploads
+Media compression
+
+####3.Performance Optimizations
+Lazy loading components
+Image optimization
+Database indexing
+
 ## Contributing
 
 1. Fork the repository
