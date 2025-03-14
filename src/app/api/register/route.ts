@@ -50,7 +50,7 @@ const HTML_TEMPLATE = (text: string): string => {
 		  <div class="container">
 			<div class="email">
 			  <div class="email-header">
-				<h1>WhatsApp Clone</h1>
+				<h1>Video Chat App</h1>
 			  </div>
 			  <div class="email-body">
 				<p>${text}</p>
@@ -67,56 +67,36 @@ const HTML_TEMPLATE = (text: string): string => {
 
 export async function POST(request: Request): Promise<NextResponse> {
 	try {
-		const body = (await request.json()) as { email: string; name: string; password: string };
+		const body = await request.json();
 		const { email, name, password } = body;
-		const hashedPassword = await bcrypt.hash(password, 12);
-		const existingUser = await prisma.user.findUnique({
-			where: {
-				email,
-			},
-		});
-		if (existingUser && existingUser.verificationCode === "") {
-			return NextResponse.json({ error: "User already exists" }, { status: 400 });
-		} else if (existingUser && existingUser.verificationCode !== "") {
-			const decoded = jwt.verify(
-				String(existingUser.verificationCode),
-				String(process.env.NEXTAUTH_SECRET) + email
-			);
-			if (decoded) {
-				return NextResponse.json({ error: "User already exists" }, { status: 400 });
-			} else {
-				await prisma.user.delete({
-					where: {
-						email,
-					},
-				});
-			}
+
+		if (!email || !name || !password) {
+			return new NextResponse("Missing info", { status: 400 });
 		}
-		const emailVerificationToken = jwt.sign({ email }, String(process.env.NEXTAUTH_SECRET) + email, {
-			expiresIn: "1d",
-		});
-		const url = `${String(process.env.NEXTAUTH_URL)}/verify?token=${emailVerificationToken}`;
-		const mailOptions = {
-			from: process.env.MAIL_USERNAME,
-			to: email,
-			subject: "Email Verification",
-			html: HTML_TEMPLATE(
-				`Your verification link is: <a href="${url}">${url}</a>. This link will expire in 24 hours.`
-			),
-		};
-		await transporter.sendMail(mailOptions);
-		// const decoded = jwt.verify(emailVerificationToken, String(process.env.NEXTAUTH_SECRET) + email);
+
+		const hashedPassword = await bcrypt.hash(password, 12);
+
 		const user = await prisma.user.create({
 			data: {
 				email,
 				name,
 				hashedPassword,
-				emailVerified: false,
-				verificationCode: emailVerificationToken,
 			},
 		});
+
+		const emailHtml = `
+		<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+			<h1>Video Chat App</h1>
+			<p>Hello ${name},</p>
+			<p>Thank you for registering with Video Chat App. Your account has been created successfully.</p>
+			<p>You can now log in using your email and password.</p>
+			<p>Best regards,<br>Video Chat App Team</p>
+		</div>
+		`;
+
 		return NextResponse.json(user);
-	} catch (error) {
-		return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+	} catch (error: any) {
+		console.log(error, "REGISTRATION_ERROR");
+		return new NextResponse("Internal Error", { status: 500 });
 	}
 }

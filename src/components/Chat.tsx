@@ -5,7 +5,6 @@ import "react-toastify/dist/ReactToastify.css";
 import { User } from "@prisma/client";
 import axios from "axios";
 import { find } from "lodash";
-import Lottie from "lottie-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
@@ -15,9 +14,9 @@ import { useRecoilState } from "recoil";
 
 import getConversationById from "@/actions/getConversationbyId";
 import getCurrentUser from "@/actions/getCurrentUser";
-import animationData from "@/assets/animation_lkgam3yw.json";
 import { UserSession } from "@/lib/model";
 import { pusherClient } from "@/lib/pusher";
+import LoadingAnimation from "./LoadingAnimation";
 import { FullConversationType, FullMessageType } from "@/lib/types";
 
 import { Call, callState } from "./atoms/CallState";
@@ -108,36 +107,15 @@ export default function Chat(): React.JSX.Element {
 		async function getUser(): Promise<void> {
 			const data = await getCurrentUser();
 			setUser(data);
+			setLoading(false);
 		}
 		void getUser();
 	}, []);
-	React.useEffect(() => {
-		if (session) {
-			const email = session.user?.email ?? "";
-			void axios
-				.get("/api/users", {
-					params: {
-						email,
-					},
-				})
-				.then((res) => {
-					if (res.status === 200) {
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-						if (!res.data.emailVerified) {
-							toast.error("Email not verified");
-							router.push("/verify");
-						} else {
-							setLoading(false);
-						}
-					}
-				});
-		}
-	}, [session, router]);
 	return (
 		<>
 			{(CallState.videoCall?.incoming || CallState.voiceCall?.incoming) && user && (
 				<div className="relative z-0 h-screen max-h-screen w-screen max-w-full overflow-hidden lg:p-5">
-					<div className="absolute left-0 top-0 -z-10 flex h-[20vh] w-full bg-[#00a783] dark:bg-[#10745e] " />
+					<div className="absolute left-0 top-0 -z-10 flex h-[20vh] w-full bg-gray-100 dark:bg-[#10745e]" />
 					<IncomingCall
 						user={user}
 						email={session?.user?.email ?? ""}
@@ -148,7 +126,7 @@ export default function Chat(): React.JSX.Element {
 			)}
 			{(CallState.voiceCall?.outgoing || CallState.videoCall?.outgoing) && user && (
 				<div className="relative z-0 h-screen max-h-screen w-screen max-w-full overflow-hidden lg:p-5">
-					<div className="absolute left-0 top-0 -z-10 flex h-[20vh] w-full bg-[#00a783] dark:bg-[#10745e] " />
+					<div className="absolute left-0 top-0 -z-10 flex h-[20vh] w-full bg-gray-100 dark:bg-[#10745e]" />
 					{/* eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style */}
 					<OutgoingCall user={user} call={(CallState.videoCall ?? CallState.voiceCall) as Call} />
 				</div>
@@ -157,14 +135,14 @@ export default function Chat(): React.JSX.Element {
 				!CallState.voiceCall?.outgoing &&
 				!CallState.videoCall?.incoming &&
 				!CallState.voiceCall?.incoming && (
-					<div className="relative z-0 grid h-screen max-h-screen w-screen max-w-full overflow-hidden bg-gradient-to-b from-[#f0f2f5] to-[#efeae2] dark:from-[#222e35] dark:to-[#0b141a] lg:grid-cols-main lg:p-5">
+					<div className="relative z-0 grid h-screen max-h-screen w-screen max-w-full overflow-hidden bg-gradient-to-b from-gray-100 to-gray-200 dark:from-[#222e35] dark:to-[#0b141a] lg:grid-cols-main lg:p-5">
 						{loading || !session ? (
 							<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform">
-								<Lottie animationData={animationData} loop={true} height={500} width={500} />
+								<LoadingAnimation />
 							</div>
 						) : (
 							<>
-								<div className="absolute -z-10 flex h-[20vh] w-full bg-[#00a783] dark:bg-[#10745e] " />
+								<div className="absolute -z-10 flex h-[20vh] w-full bg-gray-100 dark:bg-[#10745e]" />
 								<ChatList />
 								{conversationId ? (
 									<div className={MessageSearch ? "grid grid-cols-1 lg:grid-cols-2" : "grid-cols-2"}>

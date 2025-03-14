@@ -12,10 +12,12 @@ const getConversations = async (): Promise<FullConversationType[]> => {
 	const currentUser = await getCurrentUser();
 
 	if (!currentUser?.id) {
+		console.log("No current user found");
 		return [];
 	}
 
 	try {
+		console.log("Fetching conversations for user:", currentUser.id);
 		const conversations = await prisma.conversation.findMany({
 			orderBy: {
 				lastMessageAt: "desc",
@@ -71,11 +73,15 @@ const getConversations = async (): Promise<FullConversationType[]> => {
 				},
 			},
 		});
+
+		console.log("Found conversations:", conversations.length);
+		console.log("Conversation IDs:", conversations.map(c => c.id));
+		
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-expect-error
 		return conversations;
 	} catch (error) {
-		console.log(error, "CONVERSATIONS_FETCH_ERROR");
+		console.error("Error fetching conversations:", error);
 		return [];
 	}
 };

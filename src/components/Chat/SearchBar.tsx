@@ -10,7 +10,7 @@ export default function SearchBar({
 	callback: () => void;
 }): React.JSX.Element {
 	return (
-		<div className="flex h-14 items-center gap-1 pl-5">
+		<div className="flex h-14 items-center gap-1 pl-5 w-full">
 			<div className="flex flex-grow items-center gap-7 rounded-lg bg-[#f0f2f5] px-4 py-1.5 dark:bg-[#222e35]">
 				<div>
 					<FaMagnifyingGlass className="cursor-pointer text-sm text-[#54656f] dark:text-[#aebac1]" />

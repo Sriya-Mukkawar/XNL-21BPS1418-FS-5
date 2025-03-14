@@ -6,22 +6,26 @@ import { useSession } from "next-auth/react";
 import React from "react";
 import { BiFilter } from "react-icons/bi";
 import { FaMagnifyingGlass } from "react-icons/fa6";
+import { useRecoilState } from "recoil";
 
-// import { useRecoilState } from "recoil";
 import { UserSession } from "@/lib/model";
 import { pusherClient } from "@/lib/pusher";
 import { FullConversationType } from "@/lib/types";
+import { conversationState } from "@/components/atoms/conversationState";
 
-// import { conversationState } from "../atoms/conversationState";
 import ChatListItem from "./ChatListItem";
 
 export default function List({ conversation }: { conversation: FullConversationType[] }): React.JSX.Element {
-	// const conversationId = useRecoilState(conversationState)[0];
+	const [activeConversationId, setActiveConversationId] = useRecoilState(conversationState);
 	const { data: session } = useSession() as { data: UserSession | undefined };
 	const [conversations, setConversations] = React.useState<FullConversationType[]>(conversation);
 	const searchRef = React.useRef<HTMLInputElement>(null);
 	const [searchResults, setSearchResults] = React.useState<FullConversationType[]>([]);
-	// const pusherKey = React.useMemo(() => session?.user?.email, [session?.user?.email]);
+
+	React.useEffect(() => {
+		setConversations(conversation);
+	}, [conversation]);
+
 	React.useEffect(() => {
 		if (!session?.user?.email) return;
 		pusherClient.subscribe(session?.user?.email);
@@ -97,9 +101,9 @@ export default function List({ conversation }: { conversation: FullConversationT
 		setSearchResults(results);
 	};
 	return (
-		<>
-			<div className="flex h-14 items-center gap-1 pl-5">
-				<div className="flex flex-grow items-center gap-7 rounded-lg bg-[#f0f2f5] px-4 py-1.5 dark:bg-[#222e35]">
+		<div className="flex flex-col h-full bg-white dark:bg-gray-900">
+			<div className="flex h-14 items-center bg-white dark:bg-gray-900 sticky top-0 z-10">
+				<div className="flex flex-grow items-center gap-7 rounded-lg bg-gray-100 px-4 py-1.5 dark:bg-gray-800 mx-4">
 					<div>
 						<FaMagnifyingGlass className="cursor-pointer text-sm text-[#54656f] dark:text-[#aebac1]" />
 					</div>
@@ -117,26 +121,28 @@ export default function List({ conversation }: { conversation: FullConversationT
 					<BiFilter className="cursor-pointer text-xl text-[#54656f] dark:text-[#aebac1]" />
 				</div>
 			</div>
-			<div className="flex h-[90vh] flex-grow flex-col overflow-y-auto border-t border-[#e9edef] pb-24 scrollbar-thin scrollbar-thumb-gray-300 dark:border-[#313d45] dark:scrollbar-thumb-gray-700 lg:h-[79.5vh]">
-				{session &&
-					searchResults.length === 0 &&
-					conversations.map((conversation: FullConversationType) => (
-						<ChatListItem
-							conversation={conversation}
-							key={conversation.id}
-							email={String(session.user?.email)}
-						/>
-					))}
-				{session &&
-					searchResults.length > 0 &&
-					searchResults.map((conversation: FullConversationType) => (
-						<ChatListItem
-							conversation={conversation}
-							key={conversation.id}
-							email={String(session.user?.email)}
-						/>
-					))}
+			<div className="flex-1 overflow-y-auto border-t border-[#e9edef] scrollbar-thin scrollbar-thumb-gray-300 dark:border-[#313d45] dark:scrollbar-thumb-gray-700 bg-white dark:bg-gray-900">
+				<div className="flex flex-col">
+					{session &&
+						searchResults.length === 0 &&
+						conversations.map((conversation: FullConversationType) => (
+							<ChatListItem
+								conversation={conversation}
+								key={conversation.id}
+								email={String(session.user?.email)}
+							/>
+						))}
+					{session &&
+						searchResults.length > 0 &&
+						searchResults.map((conversation: FullConversationType) => (
+							<ChatListItem
+								conversation={conversation}
+								key={conversation.id}
+								email={String(session.user?.email)}
+							/>
+						))}
+				</div>
 			</div>
-		</>
+		</div>
 	);
 }

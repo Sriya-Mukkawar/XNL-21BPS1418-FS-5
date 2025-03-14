@@ -99,40 +99,42 @@ export async function POST(_: Request, { params }: { params: IParams }): Promise
 					select: {
 						id: true,
 						email: true,
-						image: true,
 						name: true,
-						createdAt: true,
-						updatedAt: true,
-						lastSeen: true,
-						conversationIds: false,
-						seenMessageIds: false,
 					},
 				},
 				seen: {
 					select: {
 						id: true,
 						email: true,
-						image: true,
 						name: true,
-						createdAt: true,
-						updatedAt: true,
-						lastSeen: true,
-						conversationIds: false,
-						seenMessageIds: false,
 					},
 				},
 			},
 		});
-		for (const message of updatedMessages) {
+
+		// Send minimal data through Pusher
+		const minimalMessages = updatedMessages.map(message => ({
+			id: message.id,
+			seenIds: message.seenIds,
+			seen: message.seen.map(user => ({
+				id: user.id,
+				email: user.email,
+				name: user.name,
+			})),
+		}));
+
+		for (const message of minimalMessages) {
 			await pusherServer.trigger(String(currentUser.email), "conversation:update", {
 				id: conversationId,
 				messages: [message],
 			});
 		}
+
 		if (lastMessage.seenIds.includes(currentUser.id)) {
 			return NextResponse.json(conversation);
 		}
-		for (const message of updatedMessages) {
+
+		for (const message of minimalMessages) {
 			await pusherServer.trigger(String(conversationId), "message:update", [message]);
 		}
 		return new NextResponse("Success");

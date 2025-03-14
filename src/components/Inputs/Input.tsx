@@ -1,71 +1,100 @@
 "use client";
 
-import clsx from "clsx";
 import React from "react";
-import { FieldErrors, FieldValues, UseFormRegister } from "react-hook-form";
-import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
+import { FieldErrors, FieldValues, Path, UseFormRegister } from "react-hook-form";
+import { IconType } from "react-icons";
+import { BiShow, BiHide } from "react-icons/bi";
 
-interface FormDefaults extends FieldValues {
-	name: string | undefined;
-	email: string;
-	password: string;
-}
-
-interface InputProps {
+interface InputProps<T extends FieldValues> {
 	label: string;
-	id: string;
+	id: Path<T>;
 	type?: string;
 	required?: boolean;
-	register: UseFormRegister<FormDefaults>;
-	errors: FieldErrors;
+	register: UseFormRegister<T>;
+	errors: FieldErrors<T>;
 	disabled?: boolean;
+	icon?: IconType;
 }
 
-const Input: React.FC<InputProps> = ({ label, id, register, required, errors, type = "text", disabled }) => {
-	const [showPassword, setShowPassword] = React.useState<boolean>(false);
-	const [_type, setType] = React.useState<string>(type);
+const Input = <T extends FieldValues>({
+	label,
+	id,
+	type = "text",
+	register,
+	required,
+	errors,
+	disabled,
+	icon: Icon,
+}: InputProps<T>): React.JSX.Element => {
+	const [showPassword, setShowPassword] = React.useState(false);
+
+	const togglePasswordVisibility = () => {
+		setShowPassword(!showPassword);
+	};
+
 	return (
 		<div>
-			<label htmlFor={id} className="block text-sm font-medium leading-6 text-gray-900 dark:text-gray-200">
+			<label
+				htmlFor={id}
+				className="block text-sm font-medium leading-6 text-gray-900 dark:text-gray-100"
+			>
 				{label}
 			</label>
 			<div className="relative mt-2">
 				<input
 					id={id}
-					type={_type}
-					autoComplete={id}
+					type={showPassword ? "text" : type}
+					autoComplete={type === "password" ? "current-password" : "off"}
 					disabled={disabled}
 					{...register(id, { required })}
-					className={clsx(
-						`form-input form-control block w-full rounded-md border-0 bg-gray-50 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-sky-600 dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400 dark:ring-gray-500 dark:focus:ring-sky-500 sm:text-sm sm:leading-6`,
-						errors[id] &&
-							"is-invalid ring-rose-500 focus:ring-rose-500 dark:ring-rose-500 dark:focus:ring-rose-500",
-						disabled && "cursor-default opacity-50"
-					)}
+					className={`
+						form-input
+						block 
+						w-full 
+						rounded-md 
+						border-0 
+						py-1.5 
+						text-gray-900
+						dark:text-white
+						dark:bg-gray-700
+						shadow-sm 
+						ring-1 
+						ring-inset 
+						ring-gray-300 
+						placeholder:text-gray-400 
+						focus:ring-2 
+						focus:ring-inset 
+						focus:ring-sky-600 
+						sm:text-sm 
+						sm:leading-6
+						${errors[id] ? "focus:ring-rose-500" : ""}
+						${disabled ? "opacity-50 cursor-default" : ""}
+					`}
 				/>
 				{type === "password" && (
 					<button
 						type="button"
-						onClick={(): void =>
-							setShowPassword(() => {
-								if (_type === "password") {
-									setType("text");
-									return true;
-								} else {
-									setType("password");
-									return false;
-								}
-							})
-						}
-						className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 dark:text-gray-400">
-						{showPassword ? <AiFillEye /> : <AiFillEyeInvisible />}
+						onClick={togglePasswordVisibility}
+						className="absolute right-3 top-1/2 -translate-y-1/2"
+					>
+						{showPassword ? (
+							<BiHide className="text-gray-500" />
+						) : (
+							<BiShow className="text-gray-500" />
+						)}
 					</button>
+				)}
+				{Icon && (
+					<Icon
+						size={24}
+						className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+					/>
 				)}
 			</div>
 			{errors[id] && (
-				<p className="invalid-feedback mt-2 text-sm text-rose-600 dark:text-rose-400" id={`${id}-error`}>
-					{String(errors[id]?.message)}
-				</p>
+				<span className="text-sm text-rose-500">
+					{errors[id]?.message as string}
+				</span>
 			)}
 		</div>
 	);

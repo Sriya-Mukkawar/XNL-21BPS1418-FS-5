@@ -91,9 +91,11 @@ export default function ContactList(): React.JSX.Element {
 				</div>
 			</div>
 			<div className="flex h-[80vh] w-full flex-grow flex-col space-y-2 overflow-y-auto pb-24 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 lg:h-[60vh]">
-				<span className="text-md mt-5 px-8 py-2 font-semibold text-[#008069] dark:text-[#008069]">
-					CONTACTS ON WHATSAPP
-				</span>
+				<div className="flex flex-col gap-4 px-8 py-14">
+					<div className="text-center text-[20px] text-[#41525d] dark:text-[#e9edef]">
+						CONTACTS ON VIDEO CHAT
+					</div>
+				</div>
 				{searchResults.length > 0 &&
 					searchResults.map((user) => (
 						<div

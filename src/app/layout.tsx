@@ -1,29 +1,24 @@
-"use client";
-
-import "@/styles/globals.css";
-
+import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { SessionProvider } from "next-auth/react";
-import { ThemeProvider } from "next-themes";
-import React from "react";
-import { RecoilRoot } from "recoil";
-
-import ActiveStatus from "@/components/ActiveContext";
+import "./globals.css";
+import ClientLayout from "@/components/ClientLayout";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export default function RootLayout({ children }: { children: React.ReactNode }): React.JSX.Element {
+export const metadata: Metadata = {
+	title: "Video Chat App",
+	description: "A real-time video chat application",
+};
+
+export default function RootLayout({
+	children,
+}: {
+	children: React.ReactNode;
+}) {
 	return (
-		<html lang="en">
-			<body className={`${inter.className}`}>
-				<SessionProvider>
-					<RecoilRoot>
-						<ThemeProvider attribute="class">
-							<ActiveStatus />
-							{children}
-						</ThemeProvider>
-					</RecoilRoot>
-				</SessionProvider>
+		<html lang="en" suppressHydrationWarning>
+			<body className={inter.className}>
+				<ClientLayout>{children}</ClientLayout>
 			</body>
 		</html>
 	);

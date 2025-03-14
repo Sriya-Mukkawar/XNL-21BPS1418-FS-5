@@ -18,7 +18,7 @@ model User {
   verificationCode String? @default("")
   hashedPassword  String?
   image           String? @default("")
-  about           String? @default("Hey there! I am using WhatsApp Clone")
+  about           String?   @default("Hey there! I am using Video Chat App")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   lastSeen        DateTime? @default(now())
@@ -73,7 +73,9 @@ model Message {
   body String?
   image String?
   audio String?
+  video String?
   type String?
+  metadata String?
   createdAt DateTime @default(now())
 
   seenIds String[] @db.ObjectId

@@ -6,7 +6,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import axios from "axios";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import React from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
@@ -19,14 +19,11 @@ import { motion } from "framer-motion";
 
 import { UserSession } from "@/lib/model";
 import LoadingAnimation from "./LoadingAnimation";
-
 import AuthSocialButton from "./Inputs/AuthSocialButton";
 import Button from "./Inputs/Button";
 import Input from "./Inputs/Input";
 
-// Client-side only imports
 const ClientToast = React.lazy(() => Promise.resolve({ default: ({ theme }: { theme: Theme }) => {
-	// Only import the CSS on the client
 	if (typeof window !== 'undefined') {
 		require('react-toastify/dist/ReactToastify.css');
 	}
@@ -38,6 +35,21 @@ enum FormVariants {
 	REGISTER = "REGISTER",
 }
 
+interface FormData {
+	name?: string;
+	email: string;
+	password: string;
+}
+
+const loginSchema = Yup.object({
+	email: Yup.string().email('Invalid email').required('Email is required'),
+	password: Yup.string().required('Password is required').min(6, 'Password must be at least 6 characters'),
+}).required();
+
+const registerSchema = loginSchema.shape({
+	name: Yup.string().required('Name is required'),
+}).required();
+
 export default function AuthForm(): React.JSX.Element {
 	const router = useRouter();
 	const { data: session } = useSession() as { data: UserSession | undefined };
@@ -45,237 +57,175 @@ export default function AuthForm(): React.JSX.Element {
 	const currentTheme = theme === "system" ? systemTheme : theme;
 	const [variant, setVariant] = React.useState<FormVariants>(FormVariants.LOGIN);
 	const [loading, setLoading] = React.useState<boolean>(false);
+
 	const toggleVariant = React.useCallback(() => {
-		if (variant === FormVariants.LOGIN) {
-			setVariant(FormVariants.REGISTER);
-		} else {
-			setVariant(FormVariants.LOGIN);
-		}
+		setVariant(variant === FormVariants.LOGIN ? FormVariants.REGISTER : FormVariants.LOGIN);
 	}, [variant]);
-	const schema = Yup.object().shape({
-		password: Yup.string()
-			.required("Password is required")
-			.min(8, "Password must be at least 8 characters")
-			.matches(
-				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()])[A-Za-z\d!@#$%^&*()]{8,}$/,
-				"Password must contain at least one uppercase letter, one lowercase letter, one number and one special character"
-			),
-		email: Yup.string().email("Email is invalid").required("Email is required"),
-		name: variant === FormVariants.REGISTER ? Yup.string().required("Name is required") : Yup.string(),
-	});
+
 	const {
 		register,
 		handleSubmit,
-		reset,
 		formState: { errors },
-	} = useForm({
-		mode: "onChange",
-		resolver: yupResolver(schema),
+		reset,
+	} = useForm<FormData>({
+		resolver: yupResolver(variant === FormVariants.LOGIN ? loginSchema : registerSchema),
 		defaultValues: {
 			name: "",
 			email: "",
 			password: "",
 		},
 	});
-	const onSubmit: SubmitHandler<FieldValues> = (data: FieldValues) => {
-		if (loading) return;
-		setLoading(true);
-		if (variant === FormVariants.LOGIN) {
-			signIn("credentials", {
-				...data,
-				redirect: false,
-			})
-				.then((callback) => {
-					if (callback?.error) {
-						toast.error("Invalid credentials");
-					}
-					if (callback?.ok && !callback.error) {
-						toast.success("Logged in successfully");
-					}
-				})
-				.finally(() => {
-					setLoading(false);
-				});
-		} else {
-			void axios
-				.post("/api/register", data)
-				.then(() => {
-					void signIn("credentials", {
-						...data,
-						redirect: false,
-					}).then((callback) => {
-						if (callback?.error) {
-							toast.error("Invalid credentials");
-						}
-						if (callback?.ok && !callback.error) {
-							toast.success("Registered successfully!");
-							router.push("/chat");
-						}
-					});
-				})
-				.catch((err) => {
-					toast.error(String(err.response.data.error));
-				})
-				.finally(() => {
-					setLoading(false);
-				});
-		}
-	};
-	const socialAction = (action: string): void => {
-		if (loading) return;
-		setLoading(true);
-		if (session) {
-			void signOut();
-		}
-		void signIn(action, {
-			callbackUrl: "/chat",
-		})
-			.then((callback) => {
-				if (callback?.error) {
-					toast.error("Invalid credentials");
-				}
-				if (callback?.ok && !callback.error) {
-					toast.success("Logged in successfully");
-				}
-			})
-			.finally(() => {
-				setLoading(false);
-			});
-	};
+
 	React.useEffect(() => {
 		reset();
-		setLoading(false);
 	}, [variant, reset]);
-	React.useEffect(() => {
-		if (session) {
-			setLoading(true);
-			const email = session.user?.email ?? "";
-			void axios
-				.get("/api/users", {
-					params: {
-						email,
-					},
-				})
-				.then((res) => {
-					if (res.status === 200) {
-						if (res.data.emailVerified) {
-							router.push("/chat");
-						} else {
-							router.push("/verify");
-						}
-					}
+
+	const onSubmit: SubmitHandler<FormData> = async (data) => {
+		setLoading(true);
+
+		try {
+			if (variant === FormVariants.REGISTER) {
+				// Register
+				await axios.post('/api/register', data);
+				// Auto login after registration
+				await signIn('credentials', {
+					email: data.email,
+					password: data.password,
+					redirect: false,
 				});
+			} else {
+				// Login
+				const result = await signIn('credentials', {
+					email: data.email,
+					password: data.password,
+					redirect: false,
+				});
+
+				if (result?.error) {
+					toast.error('Invalid credentials');
+					return;
+				}
+			}
+
+			router.push('/chat');
+		} catch (error) {
+			toast.error('Something went wrong!');
+		} finally {
 			setLoading(false);
 		}
+	};
+
+	const socialAction = async (action: string) => {
+		setLoading(true);
+		try {
+			const result = await signIn(action, { redirect: false });
+			if (result?.error) {
+				toast.error('Invalid credentials');
+			}
+			if (result?.ok) {
+				router.push('/chat');
+			}
+		} catch (error) {
+			toast.error('Something went wrong!');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	React.useEffect(() => {
+		if (session?.user) {
+			router.push('/chat');
+		}
 	}, [session, router]);
+
+	if (session?.user) {
+		return <LoadingAnimation />;
+	}
+
 	return (
 		<>
-			{session ? (
-				<LoadingAnimation />
-			) : (
-				<>
-					<div className="max-w-sm px-2 sm:mx-auto sm:w-full sm:max-w-md">
-						<div className="relative rounded-lg bg-white px-6 py-6 shadow-lg dark:bg-gray-900 sm:px-10">
-							<motion.div
-								className="absolute left-0 right-0 top-0 mx-auto -translate-y-1/2"
-								initial={{ scale: 0.5, opacity: 0 }}
-								animate={{ scale: 1, opacity: 1 }}
-								transition={{ duration: 0.5 }}
-							>
-								<Image
-									className="h-24 w-24 rounded-full bg-white p-3 dark:bg-gray-900"
-									src="/logo.svg"
-									alt="VideoApp Logo"
-									width={96}
-									height={96}
-									priority
-								/>
-							</motion.div>
-							<h2 className="my-6 text-center text-3xl font-bold text-gray-900 dark:text-gray-100">
-								{variant === FormVariants.LOGIN ? "Sign in" : "Create an account"}
-							</h2>
-							{/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-							<form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-								{variant === FormVariants.REGISTER && (
-									<Input
-										disabled={loading}
-										register={register}
-										errors={errors}
-										required
-										id="name"
-										label="Name"
-									/>
-								)}
-								<Input
-									disabled={loading}
-									register={register}
-									errors={errors}
-									required
-									id="email"
-									label="Email address"
-									type="email"
-								/>
-								<Input
-									disabled={loading}
-									register={register}
-									errors={errors}
-									required
-									id="password"
-									label="Password"
-									type="password"
-								/>
-								<div>
-									<Button disabled={loading} fullWidth type="submit">
-										{loading ? (
-											<BeatLoader color="#fff" className="my-auto block" size={8} />
-										) : variant === FormVariants.LOGIN ? (
-											"Sign in"
-										) : (
-											"Sign up"
-										)}
-									</Button>
-								</div>
-							</form>
-							<div className="mt-6">
-								<div className="relative">
-									<div className="absolute inset-0 flex items-center">
-										<div className="w-full border-t border-gray-300 dark:border-gray-700" />
-									</div>
-									<div className="relative flex justify-center text-sm">
-										<span className="bg-white px-2 text-gray-500 dark:bg-gray-900 dark:text-gray-400">
-											Or continue with
-										</span>
-									</div>
-								</div>
-								<div className="mt-6 flex gap-2">
-									<AuthSocialButton
-										className="bg-gray-50 text-black hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
-										icon={BsGithub}
-										onClick={(): void => socialAction("github")}
-									/>
-									<AuthSocialButton
-										className="bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
-										icon={FcGoogle}
-										onClick={(): void => socialAction("google")}
-									/>
-								</div>
+			<div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+				<motion.div
+					initial={{ opacity: 0, y: 20 }}
+					animate={{ opacity: 1, y: 0 }}
+					className="bg-white px-4 py-8 shadow sm:rounded-lg sm:px-10 dark:bg-gray-800"
+				>
+					<form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+						{variant === FormVariants.REGISTER && (
+							<Input<FormData>
+								id="name"
+								label="Name"
+								register={register}
+								errors={errors}
+								disabled={loading}
+							/>
+						)}
+						<Input<FormData>
+							id="email"
+							label="Email"
+							type="email"
+							register={register}
+							errors={errors}
+							disabled={loading}
+						/>
+						<Input<FormData>
+							id="password"
+							label="Password"
+							type="password"
+							register={register}
+							errors={errors}
+							disabled={loading}
+						/>
+						<Button disabled={loading} fullWidth type="submit">
+							{loading ? (
+								<BeatLoader size={8} color="#fff" />
+							) : variant === FormVariants.LOGIN ? (
+								"Sign in"
+							) : (
+								"Register"
+							)}
+						</Button>
+					</form>
+
+					<div className="mt-6">
+						<div className="relative">
+							<div className="absolute inset-0 flex items-center">
+								<div className="w-full border-t border-gray-300" />
 							</div>
-							<div className="mt-6 text-center text-sm text-gray-500">
-								{variant === FormVariants.LOGIN ? "New to VideoApp?" : "Already have an account?"}
-								<button
-									onClick={toggleVariant}
-									className="ml-1 text-blue-500 hover:text-blue-600 hover:underline"
-								>
-									{variant === FormVariants.LOGIN ? "Create an account" : "Login"}
-								</button>
+							<div className="relative flex justify-center text-sm">
+								<span className="bg-white px-2 text-gray-500 dark:bg-gray-800">
+									Or continue with
+								</span>
 							</div>
 						</div>
+
+						<div className="mt-6 flex gap-2">
+							<AuthSocialButton
+								icon={BsGithub}
+								onClick={() => socialAction("github")}
+							/>
+							<AuthSocialButton
+								icon={FcGoogle}
+								onClick={() => socialAction("google")}
+							/>
+						</div>
 					</div>
-					<React.Suspense fallback={null}>
-						<ClientToast theme={currentTheme === "dark" ? "dark" : "light"} />
-					</React.Suspense>
-				</>
-			)}
+
+					<div className="mt-6 flex justify-center gap-2 px-2 text-sm text-gray-500">
+						<div>
+							{variant === FormVariants.LOGIN
+								? "New to Messenger?"
+								: "Already have an account?"}
+						</div>
+						<div onClick={toggleVariant} className="cursor-pointer underline">
+							{variant === FormVariants.LOGIN ? "Create an account" : "Login"}
+						</div>
+					</div>
+				</motion.div>
+			</div>
+			<React.Suspense fallback={null}>
+				<ClientToast theme={currentTheme as Theme} />
+			</React.Suspense>
 		</>
 	);
 }

@@ -3,37 +3,24 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { NextResponse } from "next/server";
+import { prisma } from '@/lib/prisma';
 
-import { prisma } from "@/lib/prisma";
-
-export async function GET(request: Request): Promise<NextResponse> {
+export async function GET() {
 	try {
-		const { searchParams } = new URL(request.url);
-		const email = searchParams.get("email");
-		if (!email) {
-			return NextResponse.json({ error: "Email not provided" }, { status: 400 });
-		}
-		const existingUser = await prisma.user.findUnique({
-			where: {
-				email,
+		const users = await prisma.user.findMany({
+			orderBy: {
+				createdAt: 'desc'
 			},
+			select: {
+				id: true,
+				name: true,
+				image: true
+			}
 		});
-		if (!existingUser) {
-			return NextResponse.json({ error: "User does not exist" }, { status: 400 });
-		}
-		if (existingUser.verificationCode === "" && !existingUser.emailVerified) {
-			await prisma.user.update({
-				where: {
-					email,
-				},
-				data: {
-					emailVerified: true,
-				},
-			});
-			existingUser.emailVerified = true;
-		}
-		return NextResponse.json(existingUser);
+
+		return NextResponse.json(users);
 	} catch (error) {
-		return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+		console.error('Error fetching users:', error);
+		return new NextResponse('Internal Error', { status: 500 });
 	}
 }

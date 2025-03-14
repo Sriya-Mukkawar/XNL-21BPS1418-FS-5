@@ -64,22 +64,33 @@ export const CloudinaryTheme = {
 	},
 };
 
-export const meta = {
-	title: "Whatsapp Clone",
-	description: "A responsive and modern real-time whatsapp clone made with Next.js, Pusher, and Prisma.",
-	keywords: ["Whatsapp", "Clone", "Next.js", "Pusher", "Prisma"],
-	authors: [{ name: "FallenDeity" }],
-	metadataBase: new URL(String(process.env.NEXT_PUBLIC_BASE_URL)),
-	robots: {
-		follow: true,
-		index: false,
-		nocache: true,
-	},
-	openGraph: {
-		title: "Whatsapp Clone",
-		description: "A responsive and modern real-time whatsapp clone made with Next.js, Pusher, and Prisma.",
-		images: "/logo.png",
-		type: "website",
-	},
-	themeColor: "#03fc30",
+export const metadata = {
+	title: "Video Chat App",
+	description: "A modern real-time video chat application with messaging capabilities.",
+	keywords: ["Video Chat", "Real-time", "Next.js", "Pusher", "Prisma"],
+	authors: [
+		{
+			name: "Your Name",
+		},
+	],
+	creator: "Your Name",
+	publisher: "Your Name",
 };
+
+export const openGraph = {
+	title: "Video Chat App",
+	description: "A modern real-time video chat application with messaging capabilities.",
+	url: "/",
+	siteName: "Video Chat App",
+	images: [
+		{
+			url: "/og.png",
+			width: 1200,
+			height: 630,
+		},
+	],
+	locale: "en-US",
+	type: "website",
+};
+
+export const themeColor = "#03fc30";

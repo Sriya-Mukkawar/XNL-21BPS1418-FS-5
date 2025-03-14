@@ -11,6 +11,11 @@ const nextConfig = {
 				hostname: "**",
 			},
 		],
+		domains: [
+			"res.cloudinary.com",
+			"avatars.githubusercontent.com",
+			"lh3.googleusercontent.com",
+		],
 	},
 	reactStrictMode: true,
 	distDir: "dist",

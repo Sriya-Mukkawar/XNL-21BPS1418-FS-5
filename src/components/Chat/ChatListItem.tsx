@@ -77,8 +77,8 @@ export default function ChatListItem({
 				setconversationId(conversation.id);
 			}}
 			key={conversation.id}
-			className={`flex h-[70px] w-full cursor-pointer flex-row items-center justify-between border-y px-4 py-2.5 transition-all duration-300 ease-in-out hover:bg-[#f0f2f5] dark:hover:bg-[#222e35] ${
-				conversationId === conversation.id ? "bg-[#f0f2f5] dark:bg-[#222e35]" : ""
+			className={`flex h-[70px] w-full cursor-pointer flex-row items-center justify-between border-y px-4 py-2.5 transition-all duration-300 ease-in-out hover:bg-white dark:hover:bg-gray-800 ${
+				conversationId === conversation.id ? "bg-white dark:bg-gray-800" : "bg-gray-100 dark:bg-gray-900"
 			}`}>
 			<div className="flex h-full w-full items-center space-x-4">
 				{conversation.isGroup ? (
