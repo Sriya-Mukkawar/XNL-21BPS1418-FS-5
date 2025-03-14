@@ -18,7 +18,7 @@ import * as Yup from "yup";
 import { motion } from "framer-motion";
 
 import { UserSession } from "@/lib/model";
-import LoadingAnimation from "../components/LoadingAnimation";
+import LoadingAnimation from "./LoadingAnimation";
 
 import AuthSocialButton from "./Inputs/AuthSocialButton";
 import Button from "./Inputs/Button";
