@@ -132,8 +132,8 @@ npm run test:coverage
 - `Message` ↔ `Conversation` (Many-to-One)
 - `Message` ↔ `SeenBy (Users)` (Many-to-Many)
 
-##System Architecture
-###Key Components
+## System Architecture
+### Key Components
 
 #### 1.Real-time Communication
 WebSocket connections (Pusher)
@@ -145,7 +145,7 @@ Audio/Video streaming
 File uploads
 Media compression
 
-####3.Performance Optimizations
+#### 3.Performance Optimizations
 Lazy loading components
 Image optimization
 Database indexing
