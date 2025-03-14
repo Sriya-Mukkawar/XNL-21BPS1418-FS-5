@@ -43,7 +43,6 @@ export default function AuthForm(): React.JSX.Element {
 	const { data: session } = useSession() as { data: UserSession | undefined };
 	const { systemTheme, theme } = useTheme();
 	const currentTheme = theme === "system" ? systemTheme : theme;
-	const isDark = currentTheme === "dark";
 	const [variant, setVariant] = React.useState<FormVariants>(FormVariants.LOGIN);
 	const [loading, setLoading] = React.useState<boolean>(false);
 	const toggleVariant = React.useCallback(() => {
